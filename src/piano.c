@@ -37,8 +37,8 @@ typedef int Note;
 
 SoundData loadWavFileForNote(Note note) {
     SoundData sound_data = { 0, NULL };
-    char name_buffer[256];
-    snprintf(name_buffer, 256, "samples/%i.wav", note);
+    char name_buffer[1024];
+    snprintf(name_buffer, 1024, "samples/%i.wav", note);
     FILE* file = fopen(name_buffer, "r");
     if(file != NULL) {
         uint8_t size_buffer[4];
@@ -119,7 +119,7 @@ void noteToString(Note note, char* str) {
 }
 
 void printPianoState() {
-    fprintf(stdout, "\e[u\e[K\e[s");
+    fprintf(stdout, "\e[K");
     char str_buffer[10];
     for(int ps = 0; ps < NUMBER_OF_NOTES; ps++) {
         if(piano[ps].playing_state.pressed) {
@@ -127,7 +127,7 @@ void printPianoState() {
             fprintf(stdout, "%s ", str_buffer);
         }
     }
-    fprintf(stdout, "\n");
+    fprintf(stdout, "\n\e[A");
 }
 
 PaStream* audio_stream;
