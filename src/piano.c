@@ -130,6 +130,37 @@ void printPianoState() {
     fprintf(stdout, "\n\e[A");
 }
 
+void printPianoStateSheet() {
+    fprintf(stdout, "\e[J");
+    char str_buffer[10];
+    fprintf(stdout, piano[79 - BASE_NOTE].playing_state.pressed ? "  -O-  \n" : piano[80 - BASE_NOTE].playing_state.pressed ? "# -O-  \n" : "  ---  \n");
+    fprintf(stdout, piano[77 - BASE_NOTE].playing_state.pressed ? "   O   \n" : piano[78 - BASE_NOTE].playing_state.pressed ? "#  O   \n" : "       \n");
+    fprintf(stdout, piano[76 - BASE_NOTE].playing_state.pressed ? "  -O-  \n" : "  ---  \n");
+    fprintf(stdout, piano[74 - BASE_NOTE].playing_state.pressed ? "   O   \n" : piano[75 - BASE_NOTE].playing_state.pressed ? "#  O   \n" : "       \n");
+    fprintf(stdout, piano[72 - BASE_NOTE].playing_state.pressed ? "  -O-  \n" : piano[73 - BASE_NOTE].playing_state.pressed ? "# -O-  \n" : "  ---  \n");
+    fprintf(stdout, piano[71 - BASE_NOTE].playing_state.pressed ? "   O   \n" : "       \n");
+    fprintf(stdout, piano[69 - BASE_NOTE].playing_state.pressed ? "  -O-  \n" : piano[70 - BASE_NOTE].playing_state.pressed ? "# -O-  \n" : "  ---  \n");
+    fprintf(stdout, piano[67 - BASE_NOTE].playing_state.pressed ? "   O   \n" : piano[68 - BASE_NOTE].playing_state.pressed ? "#  O   \n" : "       \n");
+    fprintf(stdout, piano[65 - BASE_NOTE].playing_state.pressed ? "---O---\n" : piano[66 - BASE_NOTE].playing_state.pressed ? "#--O---\n" : "-------\n");
+    fprintf(stdout, piano[64 - BASE_NOTE].playing_state.pressed ? "   O   \n" : "       \n");
+    fprintf(stdout, piano[62 - BASE_NOTE].playing_state.pressed ? "---O---\n" : piano[63 - BASE_NOTE].playing_state.pressed ? "#--O---\n" : "-------\n");
+    fprintf(stdout, piano[60 - BASE_NOTE].playing_state.pressed ? "   O   \n" : piano[61 - BASE_NOTE].playing_state.pressed ? "#  O   \n" : "       \n");
+    fprintf(stdout, piano[59 - BASE_NOTE].playing_state.pressed ? "---O---\n" : "-------\n");
+    fprintf(stdout, piano[57 - BASE_NOTE].playing_state.pressed ? "   O   \n" : piano[58 - BASE_NOTE].playing_state.pressed ? "#  O   \n" : "       \n");
+    fprintf(stdout, piano[55 - BASE_NOTE].playing_state.pressed ? "---O---\n" : piano[56 - BASE_NOTE].playing_state.pressed ? "#--O---\n" : "-------\n");
+    fprintf(stdout, piano[53 - BASE_NOTE].playing_state.pressed ? "   O   \n" : piano[54 - BASE_NOTE].playing_state.pressed ? "#  O   \n" : "       \n");
+    fprintf(stdout, piano[52 - BASE_NOTE].playing_state.pressed ? "---O---\n" : "-------\n");
+    fprintf(stdout, piano[50 - BASE_NOTE].playing_state.pressed ? "   O   \n" : piano[51 - BASE_NOTE].playing_state.pressed ? "#  O   \n" : "       \n");
+    fprintf(stdout, piano[48 - BASE_NOTE].playing_state.pressed ? "  -O-  \n" : piano[49 - BASE_NOTE].playing_state.pressed ? "# -O-  \n" : "  ---  \n");
+    fprintf(stdout, piano[47 - BASE_NOTE].playing_state.pressed ? "   O   \n" : "       \n");
+    fprintf(stdout, piano[45 - BASE_NOTE].playing_state.pressed ? "  -O-  \n" : piano[46 - BASE_NOTE].playing_state.pressed ? "# -O-  \n" : "  ---  \n");
+    fprintf(stdout, piano[43 - BASE_NOTE].playing_state.pressed ? "   O   \n" : piano[44 - BASE_NOTE].playing_state.pressed ? "#  O   \n" : "       \n");
+    fprintf(stdout, piano[41 - BASE_NOTE].playing_state.pressed ? "  -O-  \n" : piano[42 - BASE_NOTE].playing_state.pressed ? "# -O-  \n" : "  ---  \n");
+    fprintf(stdout, piano[40 - BASE_NOTE].playing_state.pressed ? "   O   \n" : "       \n");
+    fprintf(stdout, piano[38 - BASE_NOTE].playing_state.pressed ? "  -O-  \n" : piano[39 - BASE_NOTE].playing_state.pressed ? "# -O-  \n" : "  ---  \n");
+    fprintf(stdout, "\n\e[26A");
+}
+
 PaStream* audio_stream;
 
 int audioCallback(const void* input, void* output, uint64_t frame_count, const PaStreamCallbackTimeInfo* time_info, PaStreamCallbackFlags status_flage, void* user_data) {
@@ -216,9 +247,14 @@ void deinitKeys(Display* display) {
 #define DEFAULT_SHIFT 12
 #define UP_SHIFT 12
 #define DOWN_SHIFT 12
-void reactToKeyEvents(Display* display) {
+void reactToKeyEvents(Display* display, int output) {
     bool should_exit = false;
     int shift = DEFAULT_SHIFT;
+    if(output == 1) {
+        printPianoState();
+    } else if(output == 2) {
+        printPianoStateSheet();
+    }
 
     while (!should_exit)
     {
@@ -235,7 +271,11 @@ void reactToKeyEvents(Display* display) {
                 shift -= DOWN_SHIFT;
             } else {
                 pressPianoKey(keycode_to_note[event.xkey.keycode] + BASE_NOTE + shift);
-                printPianoState();
+                if(output == 1) {
+                    printPianoState();
+                } else if(output == 2) {
+                    printPianoStateSheet();
+                }
             }
             break;
         case KeyRelease:
@@ -247,22 +287,36 @@ void reactToKeyEvents(Display* display) {
                 shift += DOWN_SHIFT;
             } else {
                 depressPianoKey(keycode_to_note[event.xkey.keycode] + BASE_NOTE + shift);
-                printPianoState();
+                if(output == 1) {
+                    printPianoState();
+                } else if(output == 2) {
+                    printPianoStateSheet();
+                }
             }
             break;
         }
     }
 }
 
-int main() {
+int main(int argc, char** argv) {
     Display* display = XOpenDisplay(NULL);
+    int output = 0;
+
+    for(int i = 1; i < argc; i++) {
+        if(strcmp(argv[i], "-onotes") == 0) {
+            output = 1;
+        }
+        if(strcmp(argv[i], "-osheet") == 0) {
+            output = 2;
+        }
+    }
 
     initPiano();
     initPianoAudio();
     initKeys(display);
     fprintf(stderr, "Ready to play...\n");
-    fprintf(stdout, "\e[s");
-    reactToKeyEvents(display);
+    reactToKeyEvents(display, output);
+    fprintf(stdout, "\e[J");
     deinitKeys(display);
     deinitPianoAudio();
     deinitPiano();
