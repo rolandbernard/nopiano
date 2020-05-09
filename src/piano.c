@@ -35,6 +35,15 @@ typedef struct {
 // Notes are indexed from 0 starting at C0 ang incrementing by one semitone
 typedef int Note;
 
+const char* note_to_string[] = {
+    "C%i", "C#%i", "D%i", "D#%i", "E%i", "F%i", "F#%i", "G%i", "G#%i", "A%i", "A#%i", "B%i"
+};
+void noteToString(Note note, char* str) {
+    int octave = note / 12;
+    int off = note % 12;
+    sprintf(str, note_to_string[off], octave);
+}
+
 SoundData loadWavFileForNote(Note note) {
     SoundData sound_data = { 0, NULL };
     char name_buffer[1024];
@@ -62,6 +71,11 @@ SoundData loadWavFileForNote(Note note) {
             }
         }
         fclose(file);
+    } else {
+        sound_data.data = (SampleType(*)[CHANNELS])malloc(sizeof(SampleType) * CHANNELS);
+        sound_data.data[0][0] = 0;
+        sound_data.data[0][1] = 0;
+        sound_data.sample_count = 1;
     }
     return sound_data;
 }
@@ -83,7 +97,10 @@ typedef struct {
 PianoString piano[NUMBER_OF_NOTES];
 
 void initPiano() {
+    /* char str_buffer[10]; */
     for(int i = 0; i < NUMBER_OF_NOTES; i++) {
+        /* noteToString(i + BASE_NOTE, str_buffer); */
+        /* fprintf(stderr, "loading sample for %s...\n", str_buffer); */
         piano[i].sound_data = loadWavFileForNote(BASE_NOTE + i);
     }
 }
@@ -107,15 +124,6 @@ void depressPianoKey(Note note) {
         piano[note - BASE_NOTE].playing_state.faiding = true;
         piano[note - BASE_NOTE].playing_state.pressed = false;
     }
-}
-
-const char* note_to_string[] = {
-    "C%i", "C#%i", "D%i", "D#%i", "E%i", "F%i", "F#%i", "G%i", "G#%i", "A%i", "A#%i", "B%i"
-};
-void noteToString(Note note, char* str) {
-    int octave = note / 12;
-    int off = note % 12;
-    sprintf(str, note_to_string[off], octave);
 }
 
 void printPianoState() {
